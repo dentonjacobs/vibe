@@ -92,6 +92,12 @@ enum TSCStatsLoader {
         monthFormatter.calendar = calendar
         monthFormatter.dateFormat = "MMM"
 
+        // Day + month in the user's regional order and separators (e.g. "11/10" in the US, "10.11." in Germany).
+        let dayFormatter = DateFormatter()
+        dayFormatter.calendar = calendar
+        dayFormatter.locale = .autoupdatingCurrent
+        dayFormatter.setLocalizedDateFormatFromTemplate("Md")
+
         let currentYear = calendar.component(.year, from: now)
         let sevenDaysAgo = now.addingTimeInterval(-7 * 86400)
 
@@ -123,7 +129,7 @@ enum TSCStatsLoader {
             }
 
             if date >= sevenDaysAgo {
-                let key = String(format: "%04d%02d%02d|%d-%d", year, month, day, day, month)
+                let key = String(format: "%04d%02d%02d|%@", year, month, day, dayFormatter.string(from: date))
                 countsDays[key, default: 0] += 1
             }
 
