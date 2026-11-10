@@ -11,110 +11,88 @@ import Cocoa
 extension NSView {
     var backgroundColor: NSColor? {
         get {
-            guard let layer = layer, backgroundColor = layer.backgroundColor else { return nil }
-            return NSColor(CGColor: backgroundColor)
+            guard let cgColor = layer?.backgroundColor else { return nil }
+            return NSColor(cgColor: cgColor)
         }
-        
+
         set {
             wantsLayer = true
-            layer?.backgroundColor = newValue?.CGColor
+            layer?.backgroundColor = newValue?.cgColor
         }
     }
 }
 
+/// Simple bar chart. Keys of `barData` are "sortKey|Label"; bars are ordered by
+/// the full key and labelled with the part after the last "|".
 class TSCBarChartView: NSView {
-    
-    private var barData : [String: Int]?
-    private var barColor : NSColor?
-    
+
+    private let barData: [String: Int]
+    private let barColor: NSColor
+
     init(frame: CGRect, barData: [String: Int], barColor: NSColor) {
-        super.init(frame: frame)
-        
         self.barData = barData
         self.barColor = barColor
-        self.renderBarData()
+        super.init(frame: frame)
+        renderBarData()
     }
-    
-    private func renderBarData(){
-        if self.barData == nil {
-            return
-        }
-        
-        let barData = self.barData!
-        
-        var barOffset = 0
-        var maxValue = 1
-        var barCount = 0
-        
-        for (_, value) in barData {
-            if value > 0 {
-                barCount += 1
-            }
-            if value > maxValue {
-                maxValue = value
-            }
-        }
-        
-        let barTop : CGFloat = 20
-        let barHeight = frame.height - barTop
-        let barWidth = frame.width / CGFloat(barCount) - 4.0
-        
-        let sortedKeys = Array(barData.keys).sort(<)
-        Swift.print(sortedKeys)
-        
-        for var label in sortedKeys {
-            let value = barData[label]!
-            if value <= 0 {
-                continue
-            }
-            while label.characters.contains("|") {
-                label = String(label.characters.dropFirst())
-            }
-            
-            let calculatedHeight = barHeight * (CGFloat(value) / CGFloat(maxValue))
-            let calculatedFrame = CGRectMake(CGFloat(barOffset) * (barWidth + 4), barTop, barWidth, calculatedHeight)
-            var valueLabelFrame = CGRectMake(CGFloat(barOffset) * (barWidth + 4), barTop, barWidth, calculatedHeight - 2)
-            if(calculatedHeight < 18){
-                valueLabelFrame = CGRectMake(CGFloat(barOffset) * (barWidth + 4), barTop, barWidth, calculatedHeight + 18) // Outside bar
-            }
-            
-            let valueLabel = NSTextField(frame: valueLabelFrame)
-            valueLabel.stringValue = String(value)
-            valueLabel.bordered = false
-            valueLabel.editable = false
-            valueLabel.backgroundColor = NSColor(white: 1, alpha: 0)
-            valueLabel.textColor = calculatedHeight >= 18 ? NSColor(white: 1, alpha: 0.7) : self.barColor
-            valueLabel.alignment = .Center
-            valueLabel.font = NSFont.systemFontOfSize(10)
-            
-            let labelLabel = NSTextField(frame: CGRectMake(CGFloat(barOffset) * (barWidth + 4) - 3, 0, barWidth + 6, barTop - 3))
-            labelLabel.stringValue = String(label)
-            labelLabel.bordered = false
-            labelLabel.backgroundColor = NSColor(white: 1, alpha: 0)
-            labelLabel.textColor = barColor
-            labelLabel.alignment = .Center
-            labelLabel.usesSingleLineMode = true
-            labelLabel.editable = false
-            if #available(OSX 10.11, *) {
-                labelLabel.font = NSFont.systemFontOfSize(11, weight: NSFontWeightSemibold)
-            } else {
-                // Fallback on earlier versions
-                labelLabel.font = NSFont.systemFontOfSize(11);
-            }
-            
-            let barView = NSView(frame: calculatedFrame)
-            barView.backgroundColor = self.barColor
-            
-            self.addSubview(barView)
-            self.addSubview(valueLabel)
-            self.addSubview(labelLabel)
-            
-            barOffset += 1
-        }
-    }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
+    private func renderBarData() {
+        let bars = barData
+            .filter { $0.value > 0 }
+            .sorted { $0.key < $1.key }
+        guard !bars.isEmpty else { return }
+
+        let maxValue = max(1, bars.map(\.value).max() ?? 1)
+        let spacing: CGFloat = 4
+        let barTop: CGFloat = 20
+        let barHeight = frame.height - barTop
+        let barWidth = frame.width / CGFloat(bars.count) - spacing
+
+        for (index, bar) in bars.enumerated() {
+            let label = bar.key.split(separator: "|").last.map(String.init) ?? bar.key
+            let x = CGFloat(index) * (barWidth + spacing)
+            let calculatedHeight = barHeight * (CGFloat(bar.value) / CGFloat(maxValue))
+            let fitsInside = calculatedHeight >= 18
+
+            let barView = NSView(frame: CGRect(x: x, y: barTop, width: barWidth, height: calculatedHeight))
+            barView.backgroundColor = barColor
+
+            // Value sits inside the top of the bar, or just above it when the bar is too short.
+            let valueLabel = makeLabel(
+                String(bar.value),
+                frame: CGRect(x: x, y: barTop, width: barWidth,
+                              height: fitsInside ? calculatedHeight - 2 : calculatedHeight + 18),
+                font: .systemFont(ofSize: 10),
+                color: fitsInside ? NSColor(white: 1, alpha: 0.7) : barColor)
+
+            let labelLabel = makeLabel(
+                label,
+                frame: CGRect(x: x - 3, y: 0, width: barWidth + 6, height: barTop - 3),
+                font: .systemFont(ofSize: 11, weight: .semibold),
+                color: barColor)
+
+            addSubview(barView)
+            addSubview(valueLabel)
+            addSubview(labelLabel)
+        }
+    }
+
+    private func makeLabel(_ text: String, frame: CGRect, font: NSFont, color: NSColor) -> NSTextField {
+        let field = NSTextField(frame: frame)
+        field.stringValue = text
+        field.isBordered = false
+        field.isEditable = false
+        field.isSelectable = false
+        field.drawsBackground = false
+        field.textColor = color
+        field.alignment = .center
+        field.usesSingleLineMode = true
+        field.font = font
+        return field
+    }
+
 }

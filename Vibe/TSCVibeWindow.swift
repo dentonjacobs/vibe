@@ -8,48 +8,44 @@
 
 import Cocoa
 
-typealias StatsDictionary = Dictionary<String,[String:Int]>
+typealias StatsDictionary = [String: [String: Int]]
 
 class TSCVibeWindow: NSWindow {
 
-    @IBOutlet var weekGraph : NSView!;
-    @IBOutlet var monthGraph : NSView!;
-    @IBOutlet var weekdayGraph : NSView!;
-    
-    @IBOutlet var titleLabel : NSTextField?;
-    @IBOutlet var subtitleLabel : NSTextField?;
-    
-    func displayStats(stats: StatsDictionary) {
-        self.renderWeekGraph(stats);
-        self.renderMonthGraph(stats);
-        self.renderWeekdayGraph(stats);
-        
-        self.titleLabel?.stringValue = "\(stats["totals"]!["complete"]!) tasks completed."
-        self.subtitleLabel?.stringValue = "\(stats["totals"]!["incomplete"]!) tasks are currently open."
+    @IBOutlet var weekGraph: NSView!
+    @IBOutlet var monthGraph: NSView!
+    @IBOutlet var weekdayGraph: NSView!
+
+    @IBOutlet var titleLabel: NSTextField?
+    @IBOutlet var subtitleLabel: NSTextField?
+
+    func displayStats(_ stats: StatsDictionary) {
+        // Loader returns an empty dictionary when OmniFocus can't be queried.
+        guard let totals = stats["totals"] else {
+            titleLabel?.stringValue = "Couldn't read OmniFocus."
+            subtitleLabel?.stringValue = "Make sure OmniFocus is running and Vibe is allowed to control it (System Settings › Privacy & Security › Automation)."
+            return
+        }
+
+        render(stats["days"] ?? [:], in: weekGraph,
+               color: NSColor(red: 0.60, green: 0.55, blue: 0.85, alpha: 1.00))
+        render(stats["months"] ?? [:], in: monthGraph,
+               color: NSColor(red: 0.36, green: 0.65, blue: 0.90, alpha: 1.00))
+        render(stats["weekdays"] ?? [:], in: weekdayGraph,
+               color: NSColor(red: 0.21, green: 0.26, blue: 0.33, alpha: 1.00))
+
+        titleLabel?.stringValue = "\(totals["complete"] ?? 0) tasks completed."
+        subtitleLabel?.stringValue = "\(totals["incomplete"] ?? 0) tasks are currently open."
     }
-    
-    internal func renderWeekGraph(stats: StatsDictionary) {
-        let chartView = TSCBarChartView(frame: CGRectMake(0,0,self.weekGraph.frame.width, self.weekGraph.frame.height), barData: stats["days"]!, barColor: NSColor(red:0.60, green:0.55, blue:0.85, alpha:1.00));
-        chartView.autoresizingMask = [.ViewHeightSizable, .ViewWidthSizable];
-        chartView.translatesAutoresizingMaskIntoConstraints = true;
-        
-        self.weekGraph.addSubview(chartView);
+
+    private func render(_ data: [String: Int], in container: NSView, color: NSColor) {
+        // Replace the previous chart rather than stacking a new one on top of it.
+        container.subviews.filter { $0 is TSCBarChartView }.forEach { $0.removeFromSuperview() }
+
+        let chartView = TSCBarChartView(frame: container.bounds, barData: data, barColor: color)
+        chartView.autoresizingMask = [.height, .width]
+        chartView.translatesAutoresizingMaskIntoConstraints = true
+        container.addSubview(chartView)
     }
-    
-    internal func renderMonthGraph(stats: StatsDictionary) {
-        let chartView = TSCBarChartView(frame: CGRectMake(0,0,self.monthGraph.frame.width, self.monthGraph.frame.height), barData: stats["months"]!, barColor: NSColor(red:0.36, green:0.65, blue:0.90, alpha:1.00));
-        chartView.autoresizingMask = [.ViewHeightSizable, .ViewWidthSizable];
-        chartView.translatesAutoresizingMaskIntoConstraints = true;
-        
-        self.monthGraph.addSubview(chartView);
-    }
-    
-    internal func renderWeekdayGraph(stats: StatsDictionary) {
-        let chartView = TSCBarChartView(frame: CGRectMake(0,0,self.weekdayGraph.frame.width, self.weekdayGraph.frame.height), barData: stats["weekdays"]!, barColor: NSColor(red:0.21, green:0.26, blue:0.33, alpha:1.00));
-        chartView.autoresizingMask = [.ViewHeightSizable, .ViewWidthSizable];
-        chartView.translatesAutoresizingMaskIntoConstraints = true;
-        
-        self.weekdayGraph.addSubview(chartView);
-    }
-    
+
 }

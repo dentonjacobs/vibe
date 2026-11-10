@@ -8,33 +8,45 @@
 
 import Cocoa
 
-@NSApplicationMain
+@main
 class AppDelegate: NSObject, NSApplicationDelegate {
 
     @IBOutlet weak var window: TSCVibeWindow!
 
-    func applicationDidFinishLaunching(aNotification: NSNotification) {
-        self.window.titlebarAppearsTransparent = true
-        self.window.movableByWindowBackground = true
-        self.window.styleMask |= NSFullSizeContentViewWindowMask
-        self.window.backgroundColor = NSColor.whiteColor()
-        
-        self.window.makeKeyWindow()
-        self.window.makeMainWindow()
-    
-        self.updateStats()
-        
-        NSTimer.scheduledTimerWithTimeInterval(30, target: self, selector: #selector(AppDelegate.updateStats), userInfo: nil, repeats: true)
+    private var refreshTimer: Timer?
+    private var isLoading = false
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        window.titlebarAppearsTransparent = true
+        window.isMovableByWindowBackground = true
+        window.styleMask.insert(.fullSizeContentView)
+        window.backgroundColor = .white
+
+        window.makeKeyAndOrderFront(nil)
+
+        updateStats()
+
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            self?.updateStats()
+        }
     }
-    
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        true
+    }
+
     func updateStats() {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
-            let stats = TSCStatsLoader.getStats();
-            dispatch_async(dispatch_get_main_queue()) {
-                self.window.displayStats(stats);
+        // The OmniFocus query can take several seconds; don't start another while one is running.
+        guard !isLoading else { return }
+        isLoading = true
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            let stats = TSCStatsLoader.getStats()
+            DispatchQueue.main.async {
+                self.isLoading = false
+                self.window.displayStats(stats)
             }
         }
     }
 
 }
-

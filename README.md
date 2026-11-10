@@ -1,5 +1,8 @@
 # Vibe
 
+> **Note:** This is a personal fork, updated to build with Xcode 27 / Swift 5+ and run on macOS 26. It isn't an official release.
+> Vibe was created by [Thomas Schoffelen](https://github.com/tschoffelen), who deserves all credit for the app. This fork was made from [kraigparkinson/vibe](https://github.com/kraigparkinson/vibe).
+
 A tiny tool that allows you to see how you're doing with your [OmniFocus](https://www.omnigroup.com/omnifocus/) tasks.
 
 It retrieves the completed dates of all your OmniFocus tasks, and shows you the number of completed tasks over the last 7 days, per month and per weekday. Feel free to extend it with more interesting stats, and if you use it and like it, I would love to [hear from you](https://twitter.com/tschoffelen).
