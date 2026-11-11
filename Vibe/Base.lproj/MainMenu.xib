@@ -743,20 +743,20 @@
                     <constraint firstItem="Yny-Hk-iJv" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" constant="45" id="BDg-FF-aTO"/>
                     <constraint firstItem="QsT-gu-GPx" firstAttribute="top" secondItem="lJf-6c-sl5" secondAttribute="top" id="Ccj-Ww-JPo"/>
                     <constraint firstItem="1Rz-tb-MgD" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" constant="40" id="Nij-VP-ySl"/>
-                    <constraint firstItem="1Rz-tb-MgD" firstAttribute="top" relation="greaterThanOrEqual" secondItem="Yny-Hk-iJv" secondAttribute="bottom" constant="60" id="P9R-EN-mPI"/>
+                    <constraint firstItem="1Rz-tb-MgD" firstAttribute="top" relation="greaterThanOrEqual" secondItem="Yny-Hk-iJv" secondAttribute="bottom" constant="36" id="P9R-EN-mPI"/>
                     <constraint firstItem="fRO-jw-FX6" firstAttribute="top" secondItem="ELO-0f-zdq" secondAttribute="bottom" constant="15" id="Pdt-1r-PB7"/>
                     <constraint firstItem="2rZ-AC-dJT" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" constant="45" id="QcN-pm-ZnT"/>
                     <constraint firstItem="fRO-jw-FX6" firstAttribute="leading" secondItem="ELO-0f-zdq" secondAttribute="leading" id="VEf-cL-5ah"/>
                     <constraint firstAttribute="bottom" secondItem="lJf-6c-sl5" secondAttribute="bottom" constant="42" id="WLe-kQ-kmQ"/>
-                    <constraint firstItem="2rZ-AC-dJT" firstAttribute="top" secondItem="EiT-Mj-1SZ" secondAttribute="top" constant="45" id="Wc6-AN-inQ"/>
-                    <constraint firstItem="QsT-gu-GPx" firstAttribute="leading" secondItem="fRO-jw-FX6" secondAttribute="trailing" constant="25" id="X3p-od-6Fi"/>
+                    <constraint firstItem="2rZ-AC-dJT" firstAttribute="top" secondItem="EiT-Mj-1SZ" secondAttribute="top" constant="64" id="Wc6-AN-inQ"/>
+                    <constraint firstItem="QsT-gu-GPx" firstAttribute="leading" secondItem="fRO-jw-FX6" secondAttribute="trailing" constant="40" id="X3p-od-6Fi"/>
                     <constraint firstAttribute="bottom" secondItem="QsT-gu-GPx" secondAttribute="bottom" constant="42" id="bab-1c-B0Z"/>
                     <constraint firstItem="QsT-gu-GPx" firstAttribute="leading" secondItem="u5d-yd-4Q8" secondAttribute="leading" id="gHB-pi-wLi"/>
                     <constraint firstAttribute="trailing" secondItem="QsT-gu-GPx" secondAttribute="trailing" constant="40" id="k2V-nW-2is"/>
                     <constraint firstAttribute="bottom" secondItem="fRO-jw-FX6" secondAttribute="bottom" constant="42" id="nAU-hS-cHJ"/>
                     <constraint firstItem="Yny-Hk-iJv" firstAttribute="top" secondItem="2rZ-AC-dJT" secondAttribute="bottom" constant="7" id="ndl-07-D9U"/>
-                    <constraint firstItem="fRO-jw-FX6" firstAttribute="leading" secondItem="lJf-6c-sl5" secondAttribute="trailing" constant="25" id="pC9-xX-TY8"/>
-                    <constraint firstItem="QsT-gu-GPx" firstAttribute="leading" secondItem="fRO-jw-FX6" secondAttribute="trailing" constant="25" id="zrF-CU-3qo"/>
+                    <constraint firstItem="fRO-jw-FX6" firstAttribute="leading" secondItem="lJf-6c-sl5" secondAttribute="trailing" constant="40" id="pC9-xX-TY8"/>
+                    <constraint firstItem="QsT-gu-GPx" firstAttribute="leading" secondItem="fRO-jw-FX6" secondAttribute="trailing" constant="40" id="zrF-CU-3qo"/>
                 </constraints>
             </view>
             <connections>
@@ -764,6 +764,9 @@
                 <outlet property="subtitleLabel" destination="Yny-Hk-iJv" id="yJF-te-Bfb"/>
                 <outlet property="titleLabel" destination="2rZ-AC-dJT" id="Yl4-VZ-cBg"/>
                 <outlet property="weekGraph" destination="lJf-6c-sl5" id="CGk-4K-9DV"/>
+                <outlet property="weekHeader" destination="1Rz-tb-MgD" id="vbW-hd-001"/>
+                <outlet property="monthHeader" destination="ELO-0f-zdq" id="vbW-hd-002"/>
+                <outlet property="weekdayHeader" destination="u5d-yd-4Q8" id="vbW-hd-003"/>
                 <outlet property="weekdayGraph" destination="QsT-gu-GPx" id="6vr-4R-FfC"/>
             </connections>
             <point key="canvasLocation" x="643.5" y="381"/>

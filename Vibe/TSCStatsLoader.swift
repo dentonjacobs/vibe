@@ -8,6 +8,23 @@
 
 import Foundation
 
+struct TSCBar: Equatable {
+    let label: String
+    let value: Int
+    let isHighlighted: Bool
+}
+
+struct TSCStats {
+    var lastSevenDays: [TSCBar] = []
+    var months: [TSCBar] = []
+    var weekdays: [TSCBar] = []
+
+    var complete = 0
+    var open = 0
+    var completedToday = 0
+    var completedThisWeek = 0
+}
+
 enum TSCStatsLoader {
 
     /// Emits one line per leaf task: "missing value" for open tasks, otherwise
@@ -40,9 +57,9 @@ enum TSCStatsLoader {
         """
 
     /// Queries OmniFocus and buckets completed tasks. Blocking; call off the main thread.
-    /// Returns an empty dictionary if OmniFocus could not be queried.
-    static func getStats() -> StatsDictionary {
-        guard let output = runScript() else { return [:] }
+    /// Returns nil if OmniFocus could not be queried.
+    static func getStats() -> TSCStats? {
+        guard let output = runScript() else { return nil }
         return makeStats(from: output)
     }
 
@@ -81,12 +98,26 @@ enum TSCStatsLoader {
         return String(decoding: data, as: UTF8.self)
     }
 
-    static func makeStats(from output: String, calendar: Calendar = .current, now: Date = Date()) -> StatsDictionary {
-        var countsDays: [String: Int] = [:]
-        var countsMonths: [String: Int] = [:]
-        var countsDayOfWeek: [String: Int] = [:]
-        var countIncomplete = 0
-        var countComplete = 0
+    /// Counts per bar, keyed by a sort key so bars come out in chronological order.
+    private struct Buckets {
+        private var entries: [String: (label: String, count: Int)] = [:]
+
+        mutating func add(key: String, label: String) {
+            entries[key, default: (label, 0)].count += 1
+        }
+
+        func bars(highlighting highlightKey: String) -> [TSCBar] {
+            entries
+                .sorted { $0.key < $1.key }
+                .map { TSCBar(label: $0.value.label, value: $0.value.count, isHighlighted: $0.key == highlightKey) }
+        }
+    }
+
+    static func makeStats(from output: String, calendar: Calendar = .current, now: Date = Date()) -> TSCStats {
+        var stats = TSCStats()
+        var days = Buckets()
+        var months = Buckets()
+        var weekdays = Buckets()
 
         let monthFormatter = DateFormatter()
         monthFormatter.calendar = calendar
@@ -98,12 +129,24 @@ enum TSCStatsLoader {
         dayFormatter.locale = .autoupdatingCurrent
         dayFormatter.setLocalizedDateFormatFromTemplate("Md")
 
+        func dayKey(_ date: Date) -> String {
+            let c = calendar.dateComponents([.year, .month, .day], from: date)
+            return String(format: "%04d%02d%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
+        }
+        func monthKey(_ date: Date) -> String {
+            String(format: "%02d", calendar.component(.month, from: date))
+        }
+        // Calendar weekday is 1 = Sunday; order the chart Monday first.
+        func weekdayKey(_ date: Date) -> String {
+            String((calendar.component(.weekday, from: date) + 5) % 7)
+        }
+
         let currentYear = calendar.component(.year, from: now)
         let sevenDaysAgo = now.addingTimeInterval(-7 * 86400)
 
         for line in output.split(whereSeparator: \.isNewline) {
             if line == "missing value" {
-                countIncomplete += 1
+                stats.open += 1
                 continue
             }
 
@@ -117,37 +160,28 @@ enum TSCStatsLoader {
             components.second = parts[3]
             guard let date = calendar.date(from: components) else { continue }
 
-            countComplete += 1
-            let then = calendar.dateComponents([.weekday, .day, .month, .year], from: date)
-            guard let year = then.year, let month = then.month,
-                  let day = then.day, let weekday = then.weekday else { continue }
-
-            // Keys are "sortKey|Label"; the chart sorts by key and shows the label.
-            if year == currentYear {
-                let key = String(format: "%02d|%@", month, monthFormatter.string(from: date))
-                countsMonths[key, default: 0] += 1
+            stats.complete += 1
+            if calendar.isDate(date, inSameDayAs: now) {
+                stats.completedToday += 1
+            }
+            if calendar.isDate(date, equalTo: now, toGranularity: .weekOfYear) {
+                stats.completedThisWeek += 1
             }
 
+            if calendar.component(.year, from: date) == currentYear {
+                months.add(key: monthKey(date), label: monthFormatter.string(from: date))
+            }
             if date >= sevenDaysAgo {
-                let key = String(format: "%04d%02d%02d|%@", year, month, day, dayFormatter.string(from: date))
-                countsDays[key, default: 0] += 1
+                days.add(key: dayKey(date), label: dayFormatter.string(from: date))
             }
-
-            // Calendar weekday is 1 = Sunday; order the chart Monday first.
-            let mondayFirst = (weekday + 5) % 7
-            let key = "\(mondayFirst)|\(calendar.shortWeekdaySymbols[weekday - 1])"
-            countsDayOfWeek[key, default: 0] += 1
+            let weekday = calendar.component(.weekday, from: date)
+            weekdays.add(key: weekdayKey(date), label: calendar.shortWeekdaySymbols[weekday - 1])
         }
 
-        return [
-            "days": countsDays,
-            "months": countsMonths,
-            "weekdays": countsDayOfWeek,
-            "totals": [
-                "complete": countComplete,
-                "incomplete": countIncomplete,
-            ],
-        ]
+        stats.lastSevenDays = days.bars(highlighting: dayKey(now))
+        stats.months = months.bars(highlighting: monthKey(now))
+        stats.weekdays = weekdays.bars(highlighting: weekdayKey(now))
+        return stats
     }
 
 }
