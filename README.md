@@ -9,6 +9,35 @@ It retrieves the completed dates of all your OmniFocus tasks, and shows you the 
 
 **[Download the latest version here](https://github.com/tschoffelen/vibe/releases)**
 
+## Building
+
+Requirements: macOS 26 or later, Xcode 27, and OmniFocus.
+
+From the command line:
+
+```sh
+xcodebuild -project Vibe.xcodeproj -scheme Vibe -configuration Release -derivedDataPath build clean build
+```
+
+The app is built to `build/Build/Products/Release/Vibe.app`. To install it, quit any running copy of Vibe and copy the app into `/Applications`:
+
+```sh
+ditto build/Build/Products/Release/Vibe.app /Applications/Vibe.app
+```
+
+Or in Xcode: open `Vibe.xcodeproj`, choose **Product › Archive**, then **Distribute App › Copy App**, and drag the exported `Vibe.app` into `/Applications`.
+
+### First launch
+
+- The first time Vibe runs, macOS asks whether Vibe may control OmniFocus. Click **Allow**. Vibe reads only the completion dates of your tasks.
+- The app is signed to run locally, so macOS may treat each rebuild as a new app. If Vibe shows "Couldn't read OmniFocus" after a rebuild, reset the permission and relaunch:
+
+  ```sh
+  tccutil reset AppleEvents com.dntn.vibe
+  ```
+
+- To start Vibe at login, add it in **System Settings › General › Login Items**.
+
 
 ![Screenshot](screenshot.png)
 
